@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Details</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #1d1d1d;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin: 40px 0;
+    }
+
+    .movie-detail {
+      max-width: 1000px;
+      margin: 0 auto;
+      background-color: #282828;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .movie-detail img {
+      width: 100%;
+      height: 500px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    .movie-detail h2 {
+      font-size: 2rem;
+      margin: 20px 0;
+      font-weight: bold;
+    }
+
+    .movie-detail p {
+      font-size: 1.1rem;
+      color: #ccc;
+      margin-bottom: 20px;
+    }
+
+    .movie-detail .overview {
+      margin-bottom: 40px;
+      text-align: left;
+    }
+
+    .movie-detail .vote {
+      font-size: 1.2rem;
+      color: #f5a623;
+      margin-top: 20px;
+    }
+
+    .comment-section {
+      margin-top: 40px;
+      background-color: #333;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .comment-section h3 {
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+
+    .comment-input {
+      width: 80%;
+      padding: 10px;
+      margin-bottom: 20px;
+      background-color: #444;
+      border: 1px solid #555;
+      color: white;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    .comment-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+
+    .comment-item {
+      background-color: #444;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Movie Details</h1>
+  <div id="movie-detail" class="movie-detail"></div>
+
+  <div class="comment-section">
+    <h3>Comments</h3>
+    <textarea id="comment-input" class="comment-input" placeholder="Write a comment..."></textarea>
+    <button onclick="submitComment()" class="comment-input">Submit Comment</button>
+    <div id="comment-list" class="comment-list"></div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const movieId = urlParams.get('id');
+
+    function fetchMovieDetails() {
+      fetch(`http://localhost:3000/movies/${movieId}`)
+        .then(response => response.json())
+        .then(movie => {
+          const movieDetail = document.getElementById('movie-detail');
+          movieDetail.innerHTML = `
+            <img src="${movie.Poster_Path ? 'https://image.tmdb.org/t/p/w500' + movie.Poster_Path : 'default-poster.jpg'}" alt="${movie.Title}">
+            <h2>${movie.Title}</h2>
+            <p><strong>Original Title:</strong> ${movie.Original_Title}</p>
+            <div class="overview">
+              <p><strong>Overview:</strong> ${movie.Overview}</p>
+            </div>
+            <p class="vote"><strong>Vote Average:</strong> ${movie.Vote_Average}</p>
+          `;
+          fetchComments();
+        });
+    }
+
+    function fetchComments() {
+      fetch(`http://localhost:3000/comments/${movieId}`)
+        .then(response => response.json())
+        .then(comments => {
+          const commentList = document.getElementById('comment-list');
+          commentList.innerHTML = ''; // 기존 댓글 삭제
+
+          comments.forEach(comment => {
+            const commentItem = document.createElement('div');
+            commentItem.classList.add('comment-item');
+            commentItem.innerHTML = `
+              <p>${comment.comment}</p>
+              <small>${new Date(comment.created_at).toLocaleString()}</small>
+            `;
+            commentList.appendChild(commentItem);
+          });
+        });
+    }
+
+    function submitComment() {
+      const commentInput = document.getElementById('comment-input');
+      const commentText = commentInput.value.trim();
+
+      if (commentText) {
+        fetch('http://localhost:3000/comments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            movie_id: movieId,
+            comment: commentText
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          commentInput.value = ''; // 댓글 작성 후 입력창 비우기
+          fetchComments(); // 댓글 목록 다시 불러오기
+        })
+        .catch(error => {
+          console.error('댓글 작성 중 오류 발생:', error);
+        });
+      }
+    }
+
+    window.onload = fetchMovieDetails;
+  </script>
+
+</body>
+</html>

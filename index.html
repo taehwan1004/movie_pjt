@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie List</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #1d1d1d;
+      color: #fff;
+      text-align: center;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin: 40px 0;
+      color: #fff;
+    }
+
+    #movie-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 30px;
+      padding: 30px;
+    }
+
+    .movie-card {
+      background-color: #282828;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .movie-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .movie-card img {
+      width: 100%;
+      height: 350px;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .movie-card:hover img {
+      transform: scale(1.1);
+    }
+
+    .movie-card h3 {
+      margin: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .movie-card p {
+      font-size: 14px;
+      color: #ccc;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>My Movie List</h1>
+  <div id="movie-list"></div>
+
+  <script>
+    function fetchMovies() {
+      fetch('http://localhost:3000/movies')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(movies => {
+          const movieList = document.getElementById('movie-list');
+          movieList.innerHTML = '';  // 기존 내용을 지우고 새로운 영화 리스트 추가
+
+          movies.forEach(movie => {
+            const movieCard = document.createElement('div');
+            movieCard.classList.add('movie-card');
+            movieCard.onclick = () => {
+              window.location.href = `movieDetail.html?id=${movie.ID}`;
+            };
+
+            const moviePoster = document.createElement('img');
+            const posterUrl = movie.Poster_Path ? `https://image.tmdb.org/t/p/w500${movie.Poster_Path}` : 'default-poster.jpg';
+            moviePoster.src = posterUrl;
+            moviePoster.alt = movie.Title;
+
+            const movieTitle = document.createElement('h3');
+            movieTitle.textContent = movie.Title;
+
+            movieCard.appendChild(moviePoster);
+            movieCard.appendChild(movieTitle);
+            movieList.appendChild(movieCard);
+          });
+        })
+        .catch(error => {
+          console.error('영화 데이터를 가져오는 중 오류가 발생했습니다:', error);
+        });
+    }
+
+    window.onload = fetchMovies;
+  </script>
+
+</body>
+</html>
